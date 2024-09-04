@@ -421,3 +421,40 @@ def process_file(
     assert {} == outlines_by_objid
 
     return result
+
+
+def add_square_annotes(filepath: str) -> list[dict]:
+    """Add /Square and /Circle annotions using pymupdf."""
+
+    import pymupdf
+
+    doc = pymupdf.open(filepath)
+    annotes = []
+    for page_number, page in enumerate(doc):
+        # get the list of every word in the document (with coordonates)
+        words = page.get_text_words()
+        for a in page.annots():
+            # get the annotation subtype
+            subtype = a.type[1]
+            # only do something if the subtype is Square or Circle. other subtypes are processed by pdfannots
+            if subtype in ("Circle", "Square"):
+                # get the words inside the Square/Circle.
+                text = [
+                    w[4]
+                    for w in words
+                    if a.rect.contains(pymupdf.Rect(w[0:4]))
+                ]
+                text = " ".join(text)
+                # get the color HEX code using
+                color = a.colors.get("stroke")
+                color = "#" + RGB(*color).ashex()
+                # create a dict (JSON obj) for the annote
+                annotes.append(
+                    {
+                        "color": color,
+                        "text": text,
+                        "page": page_number,
+                        "type": subtype,
+                    }
+                )
+    return annotes

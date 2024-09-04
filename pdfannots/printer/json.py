@@ -3,6 +3,7 @@ import typing as typ
 
 from . import Printer
 from ..types import Annotation, Document
+from .. import add_square_annotes
 
 
 def annot_to_dict(
@@ -35,10 +36,12 @@ class JsonPrinter(Printer):
             self,
             *,
             remove_hyphens: bool,  # Whether to remove hyphens across a line break
-            output_codec: str      # Text codec in use for output
+            output_codec: str,      # Text codec in use for output
+            squares: bool = False
     ) -> None:
         self.remove_hyphens = remove_hyphens
         self.seen_first = False
+        self.squares = squares
 
         # JSON must be represented as UTF-8, UTF-16, or UTF-32. If the output codec is
         # one of these, we can disable ASCII string escaping in the JSON encoder.
@@ -60,4 +63,9 @@ class JsonPrinter(Printer):
             self.seen_first = True
 
         annots = [annot_to_dict(document, a, self.remove_hyphens) for a in document.iter_annots()]
+
+        if self.squares:
+            annots = [i for i in annots if i['type'] not in ('Circle', 'Square')]
+            annots += add_square_annotes(filename)
+
         yield from json.JSONEncoder(indent=2, ensure_ascii=self.ensure_ascii).iterencode(annots)

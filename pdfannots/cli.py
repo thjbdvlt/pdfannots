@@ -53,6 +53,7 @@ def parse_args() -> typ.Tuple[argparse.Namespace, LAParams]:
                    help="When capturing text across a line break, don't attempt to remove hyphens.")
     g.add_argument("-f", "--format", choices=["md", "json"], default="md",
                    help="Output format (default: markdown).")
+    g.add_argument('--square', default=False, action='store_true', help="Add content of square/circle annots.")
 
     g = p.add_argument_group('Options controlling markdown output')
     mutex_group = g.add_mutually_exclusive_group()
@@ -154,7 +155,8 @@ def main() -> None:
     elif args.format == "json":
         printer = JsonPrinter(
             remove_hyphens=args.remove_hyphens,
-            output_codec=args.output.encoding)
+            output_codec=args.output.encoding,
+            squares=args.square)
 
     def write_if_nonempty(s: str) -> None:
         if s:
